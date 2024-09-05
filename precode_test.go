@@ -7,52 +7,42 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMainHandlerWhenCountMoreThanTotal(t *testing.T) {
 	totalCount := 4
-	req := httptest.NewRequest("Get", "/cafe?count=4&city=moscow", nil)
+	req, err := http.NewRequest("GET", "/cafe?count=5&city=moscow", nil) // здесь нужно создать запрос к сервису
+	require.NoError(t, err)
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(mainHandle)
 	handler.ServeHTTP(responseRecorder, req)
 
-	resp := responseRecorder.Result()
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("Unexpected status code: %d", resp.StatusCode)
-		return
-	}
-
-	body := responseRecorder.Body.String()
-	trueCount := len(strings.Split(body, ","))
-	assert.Equal(t, totalCount, trueCount, "Status code:%d, wrong count value", responseRecorder.Code)
-}
-func TestMainHandlerWhenStatusOkAndNotEmpty(t *testing.T) {
-	status := http.StatusOK
-	req := httptest.NewRequest("GET", "/cafe?count=4&city=moscow", nil)
-
-	responseRecorder := httptest.NewRecorder()
-	handler := http.HandlerFunc(mainHandle)
-	handler.ServeHTTP(responseRecorder, req)
-
-	statusResult := responseRecorder.Code
-	resp := responseRecorder.Result()
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("Unexpected status code: %d", resp.StatusCode)
-		return
-	}
-	assert.Equal(t, status, statusResult, "Expected status code:%d, got %d", http.StatusOK, statusResult) //не знаю что тут можно изменить
-	assert.NotEmpty(t, responseRecorder.Body, "Body is empty")
+	rString := strings.Split(responseRecorder.Body.String(), ",")
+	assert.Equal(t, 200, responseRecorder.Code)
+	assert.Len(t, rString, totalCount)
 }
 
-func TestMainHandlerWhenNotMoscow(t *testing.T) {
-	city := "moscow"
-	req := httptest.NewRequest("GET", "/cafe?count=4&city=moscow", nil)
+func TestWhenWrongCity(t *testing.T) {
+	req, err := http.NewRequest("GET", "/cafe?count=3&city=sarov", nil)
+	require.NoError(t, err)
+
+	responseRecorder := httptest.NewRecorder()
+	handler := http.HandlerFunc(mainHandle)
+	handler.ServeHTTP(responseRecorder, req)
+	assert.Equal(t, 400, responseRecorder.Code)
+	assert.Equal(t, "wrong city value", responseRecorder.Body.String())
+}
+
+func TestMainHandleWhenOk(t *testing.T) {
+	req, err := http.NewRequest("GET", "/cafe?count=3&city=moscow", nil)
+	require.NoError(t, err)
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(mainHandle)
 	handler.ServeHTTP(responseRecorder, req)
 
-	cityResult := req.URL.Query().Get("city")
-	assert.Equal(t, city, cityResult, "Status code:%d, wrong city value", responseRecorder.Code)
+	assert.Equal(t, 200, responseRecorder.Code)
+	assert.NotEmpty(t, string(responseRecorder.Body.String()))
 }

@@ -41,8 +41,8 @@ func TestMainHandlerWhenStatusOkAndNotEmpty(t *testing.T) {
 		t.Errorf("Unexpected status code: %d", resp.StatusCode)
 		return
 	}
-	assert.Equal(t, status, statusResult, "expected status code:%d, got %d", http.StatusOK, statusResult) //не знаю что тут можно изменить
-	assert.NotEmpty(t, responseRecorder.Body, "body is empty")
+	assert.Equal(t, status, statusResult, "Expected status code:%d, got %d", http.StatusOK, statusResult) //не знаю что тут можно изменить
+	assert.NotEmpty(t, responseRecorder.Body, "Body is empty")
 }
 
 func TestMainHandlerWhenNotMoscow(t *testing.T) {
